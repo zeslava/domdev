@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>dail: running services in freebsd jails, docker-style — domdev</title>
+        <link rel="stylesheet" href="https://domdev.su/main.css" />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon.svg"
+            type="image/svg+xml"
+        />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon-120.png"
+            type="image/png"
+            sizes="120x120"
+        />
+        <link rel="apple-touch-icon" href="https://domdev.su/favicon.png" />
+               
+         
+        <meta name="description" content="How I run services on FreeBSD in isolated jails with dail, a small tool of my own" />
+         
+        <link rel="canonical" href="https://domdev.su/en/dail/" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://domdev.su/en/dail/" />
+        <meta property="og:site_name" content="domdev" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:title" content="dail: running services in freebsd jails, docker-style — domdev" />
+        
+        <meta property="og:description" content="How I run services on FreeBSD in isolated jails with dail, a small tool of my own" />
+        
+        <meta property="og:image" content="https://domdev.su/favicon.png" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="dail: running services in freebsd jails, docker-style — domdev" />
+        
+        <meta name="twitter:description" content="How I run services on FreeBSD in isolated jails with dail, a small tool of my own" />
+        
+        <meta name="twitter:image" content="https://domdev.su/favicon.png" />
+         
+        <link
+            rel="alternate"
+            type="application/atom+xml"
+            title="domdev"
+            href="https://domdev.su/en/atom.xml"
+        />
+          
+        <link
+            rel="alternate"
+            hreflang="ru"
+            href="https://domdev.su/dail/"
+        />
+        
+        <link
+            rel="alternate"
+            hreflang="x-default"
+            href="https://domdev.su/dail/"
+        />
+         
+        <link
+            rel="alternate"
+            hreflang="en"
+            href="https://domdev.su/en/dail/"
+        />
+          
+    </head>
+    <body>
+        <header>
+            <nav>
+                <a href="https:&#x2F;&#x2F;domdev.su">domdev</a>
+                <a href="https://domdev.su/en/tags">tags</a>
+                <div class="lang-switcher">
+                         <a href="https:&#x2F;&#x2F;domdev.su&#x2F;dail&#x2F;">RU</a> 
+                </div>
+            </nav>
+        </header>
+        <main>
+<article class="post">
+  <header>
+    <h1>dail: running services in freebsd jails, docker-style</h1>
+    <time>2026-10-29</time>
+    
+    <div class="tags">
+      
+      <a href="https://domdev.su/en/tags/dail/">#dail</a>
+      
+      <a href="https://domdev.su/en/tags/jail/">#jail</a>
+      
+      <a href="https://domdev.su/en/tags/freebsd/">#freebsd</a>
+      
+    </div>
+    
+  </header>
+  <div class="content">
+    <p>I'm new to FreeBSD. Most of my experience is with Linux, but at some point the FreeBSD philosophy caught my eye:
+stability, a coherent system, and the fact that many things were done there long ago — well before Linux. Jails, for example — they've been around since 2000.
+So I decided to build my home server on FreeBSD.</p>
+<p>The first question was: how do I run services in isolation? On Linux there's Docker — describe it and run it.
+I wanted the same here: keep the host clean and skip the hassle.</p>
+<h2 id="why-build-my-own">Why build my own</h2>
+<p>FreeBSD already has jails — isolation built right into the system. What was missing was a convenient way to use them.</p>
+<p>I looked at the existing tools, but none of them clicked. Bastille looked decent, but like most of the others it's a set of scripts around jails.
+I like the idea of a static binary: download it and run it.</p>
+<p>And of course I wanted to build my own (what's life without reinventing the wheel).</p>
+<p>That's how <strong>dail</strong> — daily jail management (<a rel="external" href="https://github.com/zeslava/dail">github</a>) came about.</p>
+<h2 id="sensible-defaults">Sensible defaults</h2>
+<p>I carried over what I liked about Docker, with a focus on having to specify almost nothing.
+If something can be reasonably guessed, dail guesses it.</p>
+<p>For example, here's the entire file for zid, my home OIDC server:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="docker"><span class="giallo-l"><span style="color: light-dark(#8839EF, #CBA6F7);">FROM</span><span> 15.0-RELEASE</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>SERVICE zid</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#8839EF, #CBA6F7);">EXPOSE</span><span> 5555</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#8839EF, #CBA6F7);">COPY</span><span> target/release/zid /usr/local/bin/zid</span></span>
+<span class="giallo-l"><span style="color: light-dark(#8839EF, #CBA6F7);">COPY</span><span> .env /usr/local/etc/zid/zid.env</span></span></code></pre>
+<p>And to run it:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">doas</span><span style="color: light-dark(#40A02B, #A6E3A1);"> dail</span><span style="color: light-dark(#40A02B, #A6E3A1);"> run</span><span style="color: light-dark(#40A02B, #A6E3A1);"> zid.dail</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-ip</span><span style="color: light-dark(#FE640B, #FAB387);"> 10.100.0.4</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-rebuild</span></span></code></pre>
+<p>What I didn't have to write:</p>
+<ul>
+<li>the jail name — taken from the file name</li>
+<li>the start command — <code>SERVICE zid</code> runs <code>/usr/local/bin/zid</code> by default</li>
+<li>the user, group, rc.conf — <code>SERVICE</code> handles them</li>
+</ul>
+<p>An IP is assigned automatically by default, but I keep zid on a fixed one — other services depend on it.</p>
+<p>The defaults came from practice. Most of what I run are services, so <code>SERVICE</code> was the first directive.
+With it I needed to create a user inside the jail — and every time I named it after the service.
+So I made that the default.</p>
+<h2 id="how-i-use-it-day-to-day">How I use it day to day</h2>
+<p>The usual loop looks like this:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);font-style: italic;">#</span><span style="color: light-dark(#7C7F93, #9399B2);font-style: italic;"> edit the code</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">cargo</span><span style="color: light-dark(#40A02B, #A6E3A1);"> build</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-release</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">doas</span><span style="color: light-dark(#40A02B, #A6E3A1);"> dail</span><span style="color: light-dark(#40A02B, #A6E3A1);"> run</span><span style="color: light-dark(#40A02B, #A6E3A1);"> zid.dail</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-ip</span><span style="color: light-dark(#FE640B, #FAB387);"> 10.100.0.4</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-rebuild</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">doas</span><span style="color: light-dark(#40A02B, #A6E3A1);"> dail</span><span style="color: light-dark(#40A02B, #A6E3A1);"> logs</span><span style="color: light-dark(#40A02B, #A6E3A1);"> zid</span></span></code></pre>
+<p>Even though the name says daily, I actually don't use dail that often.
+I log in, build the service, rebuild the jail with one command — and forget about it. After that it just keeps running:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>$ dail ls</span></span>
+<span class="giallo-l"><span>NAME          STATUS   JID  IP              PORTS                           BASE          TYPE  UPTIME</span></span>
+<span class="giallo-l"><span>--------------------------------------------------------------------------------------------------------</span></span>
+<span class="giallo-l"><span>valkey        running  2    10.100.0.6/24   6379-&gt;6379/tcp                  15.0-RELEASE  thin  44d 4h</span></span>
+<span class="giallo-l"><span>pg            running  1    10.100.0.2/24                                   15.0-RELEASE  thin  44d 4h</span></span>
+<span class="giallo-l"><span>filest        running  6    10.100.0.5/24   8090-&gt;8090/tcp, 8090-&gt;8090/udp  15.0-RELEASE  thin  44d 4h</span></span>
+<span class="giallo-l"><span>zid-pg        running  7    10.100.0.3/24                                   15.0-RELEASE  thin  44d 4h</span></span>
+<span class="giallo-l"><span>cfgy-pg       running  9    10.100.0.7/24                                   15.0-RELEASE  thin  44d 4h</span></span>
+<span class="giallo-l"><span>cfgy          running  22   10.100.0.8/24   8080-&gt;8080/tcp                  15.0-RELEASE  thin  21d 0h</span></span>
+<span class="giallo-l"><span>aurora        running  72   inherit         4000-&gt;4000/tcp                  15.1-RELEASE  thin  9d 0h</span></span>
+<span class="giallo-l"><span>zid           running  78   10.100.0.4/24   5555-&gt;5555/tcp                  15.0-RELEASE  thin  5d 7h</span></span>
+<span class="giallo-l"><span>domdev        running  148  10.100.0.12/24  8300-&gt;8080/tcp                  15.0-RELEASE  thin  4d 0h</span></span></code></pre>
+<p>Some of these jails haven't been restarted in over 44 days.</p>
+<p>I count that as a success. And it shows that same FreeBSD philosophy: set it up, start it, forget it.</p>
+<h2 id="what-s-running">What's running</h2>
+<p>Currently living in jails:</p>
+<ul>
+<li><strong>zid</strong> — identity provider (OIDC)</li>
+<li><strong>cfgy</strong> — configuration management</li>
+<li><strong>aurora</strong> — home media center</li>
+<li><strong>filest</strong> — a simple REST file server</li>
+<li><strong>domdev</strong> — this blog</li>
+<li><strong>pg</strong>, <strong>zid-pg</strong>, <strong>cfgy-pg</strong> — a separate postgres for each service</li>
+<li><strong>valkey</strong> — cache for the services</li>
+</ul>
+<p>Each service in its own jail, the host stays clean.</p>
+<h2 id="what-s-still-missing">What's still missing</h2>
+<p>Not everything is perfect:</p>
+<ul>
+<li><strong>Autostart.</strong> After a server reboot, all jails have to be brought up by hand.
+An autostart mode is planned — it will most likely need some kind of daemon.</li>
+<li><strong>Networking.</strong> By default a jail gets an IP alias on <code>lo0</code>, and dail writes port forwarding rules into PF itself. But outbound access (NAT) and the bridge for VNET are still configured by hand — I'd like dail to handle that too.</li>
+</ul>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>dail is my way to run services on FreeBSD as easily as with Docker.
+One binary, a short <code>.dail</code> file and one command to rebuild.</p>
+<p>If you've also come to FreeBSD from the world of Linux and Docker — give it a try, feedback is welcome: <a rel="external" href="https://github.com/zeslava/dail">github.com/zeslava/dail</a></p>
+
+  </div>
+</article>
+</main>
+        <footer>
+            <p>2026</p>
+        </footer>
+    </body>
+</html>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>domdev - rust</title>
+    <subtitle>Writing about things I find interesting: development, systems administration, hardware.</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://domdev.su/en/tags/rust/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://domdev.su"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-07-06T00:00:00+00:00</updated>
+    <id>https://domdev.su/en/tags/rust/atom.xml</id>
+    <entry xml:lang="en">
+        <title>esp rust: setting up defmt</title>
+        <published>2026-07-06T00:00:00+00:00</published>
+        <updated>2026-07-06T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://domdev.su/en/esp-rust-defmt/"/>
+        <id>https://domdev.su/en/esp-rust-defmt/</id>
+        
+        <content type="html" xml:base="https://domdev.su/en/esp-rust-defmt/">&lt;h2 id=&quot;setting-up-defmt-on-esp32-c6-esp-hal-probe-rs&quot;&gt;Setting up defmt on ESP32-C6 (esp-hal + probe-rs)&lt;&#x2F;h2&gt;
+&lt;p&gt;Notes on migrating from &lt;code&gt;rtt-target&lt;&#x2F;code&gt; to &lt;code&gt;defmt&lt;&#x2F;code&gt; for logging over RTT.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;1-dependencies&quot;&gt;1. Dependencies&lt;&#x2F;h2&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;dependencies&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;     =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;1.1.1&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt-rtt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;1.3.0&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;code&gt;rtt-target&lt;&#x2F;code&gt; can be removed — &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt; replaces it.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2-linking-the-defmt-section&quot;&gt;2. Linking: the &lt;code&gt;.defmt&lt;&#x2F;code&gt; section&lt;&#x2F;h2&gt;
+&lt;p&gt;Error at startup:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;Error: Failed to parse defmt data&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt version found, but no `.defmt` section - check your linker configuration&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Cause: the &lt;code&gt;defmt.x&lt;&#x2F;code&gt; linker script (shipped with the &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt; crate) isn&#x27;t linked in.&lt;&#x2F;p&gt;
+&lt;p&gt;Fix — add a flag to &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;build&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;rustflags&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt; [&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;  &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-C&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;link-arg=-Tdefmt.x&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;3-transport-initialization&quot;&gt;3. Transport initialization&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;code&gt;defmt&lt;&#x2F;code&gt; by itself only formats messages — where they&#x27;re sent is decided by a separate transport crate.
+Since the project already had an RTT channel (via &lt;code&gt;rtt-target&lt;&#x2F;code&gt;), the logical choice is &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;use&lt;&#x2F;span&gt;&lt;span&gt; defmt_rtt &lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;as&lt;&#x2F;span&gt;&lt;span&gt; _&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; &#x2F;&#x2F;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; wires up RTT as the transport for defmt&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Important: &lt;code&gt;rtt_target::rtt_init_print!()&lt;&#x2F;code&gt; must be removed — two ways of initializing the RTT channel conflict.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;4-the-mandatory-timestamp&quot;&gt;4. The mandatory timestamp&lt;&#x2F;h2&gt;
+&lt;p&gt;Without it the build fails at link time:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;undefined symbol: _defmt_timestamp&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Every defmt frame includes a timestamp per the protocol, so it needs to be set explicitly:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;timestamp!&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;{&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;=u64:us&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;}&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;    esp_hal&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;time&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);font-style: italic;&quot;&gt;Instant&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;now&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;duration_since_epoch&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;as_micros&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Here &lt;code&gt;:us&lt;&#x2F;code&gt; tells the host (probe-rs) to format the number as seconds with a fractional part
+(e.g. &lt;code&gt;12.345678&lt;&#x2F;code&gt;), instead of printing raw microseconds.&lt;&#x2F;p&gt;
+&lt;p&gt;If a timestamp isn&#x27;t needed at all, an empty format can be left — the symbol still gets
+defined for linking:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;timestamp!&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;5-builds-but-prints-nothing&quot;&gt;5. &quot;Builds, but prints nothing&quot;&lt;&#x2F;h2&gt;
+&lt;p&gt;The likely cause is the log level not being set via the &lt;code&gt;DEFMT_LOG&lt;&#x2F;code&gt; environment variable (the &lt;code&gt;defmt&lt;&#x2F;code&gt; analog of &lt;code&gt;RUST_LOG&lt;&#x2F;code&gt; from &lt;code&gt;env_logger&lt;&#x2F;code&gt;).
+By default, &lt;code&gt;info&lt;&#x2F;code&gt; level doesn&#x27;t pass through.&lt;&#x2F;p&gt;
+&lt;p&gt;Quick check:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;DEFMT_LOG&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;=&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;i&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;n&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;f&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;o&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt; cargo&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-release&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;To avoid setting the variable every time, put it in &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;env&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;DEFMT_LOG&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;info&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;final-checklist&quot;&gt;Final checklist&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;defmt&lt;&#x2F;code&gt; + &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt; in dependencies, &lt;code&gt;rtt-target&lt;&#x2F;code&gt; removed&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;-Tdefmt.x&lt;&#x2F;code&gt; in &lt;code&gt;rustflags&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;use defmt_rtt as _;&lt;&#x2F;code&gt; in &lt;code&gt;main.rs&lt;&#x2F;code&gt;, old &lt;code&gt;rtt_init_print!()&lt;&#x2F;code&gt; removed&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;defmt::timestamp!&lt;&#x2F;code&gt; defined (otherwise linking fails)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;DEFMT_LOG&lt;&#x2F;code&gt; set (directly or via &lt;code&gt;[env]&lt;&#x2F;code&gt; in &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+</feed>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="ru">
+    <title>domdev - esp</title>
+    <subtitle>Пишу о том, что мне интересно: разработка, системное администрирование, железо.</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://domdev.su/tags/esp/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://domdev.su"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-07-06T00:00:00+00:00</updated>
+    <id>https://domdev.su/tags/esp/atom.xml</id>
+    <entry xml:lang="ru">
+        <title>esp rust: настройка defmt</title>
+        <published>2026-07-06T00:00:00+00:00</published>
+        <updated>2026-07-06T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://domdev.su/esp-rust-defmt/"/>
+        <id>https://domdev.su/esp-rust-defmt/</id>
+        
+        <content type="html" xml:base="https://domdev.su/esp-rust-defmt/">&lt;h2 id=&quot;nastroika-defmt-na-esp32-c6-esp-hal-probe-rs&quot;&gt;Настройка defmt на ESP32-C6 (esp-hal + probe-rs)&lt;&#x2F;h2&gt;
+&lt;p&gt;Заметка по переходу с &lt;code&gt;rtt-target&lt;&#x2F;code&gt; на &lt;code&gt;defmt&lt;&#x2F;code&gt; для логирования через RTT.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;1-zavisimosti&quot;&gt;1. Зависимости&lt;&#x2F;h2&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;dependencies&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;     =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;1.1.1&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt-rtt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;1.3.0&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;code&gt;rtt-target&lt;&#x2F;code&gt; можно удалить — его заменяет &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2-linkovka-sektsiia-defmt&quot;&gt;2. Линковка: секция &lt;code&gt;.defmt&lt;&#x2F;code&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;Ошибка при запуске:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;Error: Failed to parse defmt data&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;defmt version found, but no `.defmt` section - check your linker configuration&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Причина: линкер-скрипт &lt;code&gt;defmt.x&lt;&#x2F;code&gt; (идёт вместе с крейтом &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt;) не подключён.&lt;&#x2F;p&gt;
+&lt;p&gt;Фикс: добавить флаг в &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;build&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;rustflags&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt; [&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;  &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-C&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;link-arg=-Tdefmt.x&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;3-initsializatsiia-transporta&quot;&gt;3. Инициализация транспорта&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;code&gt;defmt&lt;&#x2F;code&gt; сам по себе только форматирует сообщения — куда их слать, решает отдельный крейт-транспорт.
+Раз в проекте уже был RTT-канал (через &lt;code&gt;rtt-target&lt;&#x2F;code&gt;), логичный выбор — &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;use&lt;&#x2F;span&gt;&lt;span&gt; defmt_rtt &lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;as&lt;&#x2F;span&gt;&lt;span&gt; _&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; &#x2F;&#x2F;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; подключает RTT как транспорт для defmt&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Важно: &lt;code&gt;rtt_target::rtt_init_print!()&lt;&#x2F;code&gt; нужно убрать — два способа инициализировать RTT-канал конфликтуют.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;4-obiazatel-naia-vremennaia-metka&quot;&gt;4. Обязательная временная метка&lt;&#x2F;h2&gt;
+&lt;p&gt;Без неё сборка падает на линковке:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;undefined symbol: _defmt_timestamp&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Каждый defmt-фрейм включает timestamp по протоколу, поэтому нужно явно её задать:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;timestamp!&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;    &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;{&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;=u64:us&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;}&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;    esp_hal&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;time&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);font-style: italic;&quot;&gt;Instant&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;now&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;duration_since_epoch&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;as_micros&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Где &lt;code&gt;:us&lt;&#x2F;code&gt; говорит хосту (probe-rs) отформатировать число как секунды с дробной частью
+(например, &lt;code&gt;12.345678&lt;&#x2F;code&gt;), а не выводить сырые микросекунды.&lt;&#x2F;p&gt;
+&lt;p&gt;Если метка не нужна вообще — можно оставить пустой формат, символ всё равно останется
+определён для линковки:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#DF8E1D, #F9E2AF);&quot;&gt;defmt&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;::&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;timestamp!&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;)&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;5-sobiraetsia-no-nichego-ne-pechataet&quot;&gt;5. &quot;Собирается, но ничего не печатает&quot;&lt;&#x2F;h2&gt;
+&lt;p&gt;Вероятная причина — уровень логов не выставлен через переменную окружения &lt;code&gt;DEFMT_LOG&lt;&#x2F;code&gt; (аналог &lt;code&gt;RUST_LOG&lt;&#x2F;code&gt; из &lt;code&gt;env_logger&lt;&#x2F;code&gt;).
+По умолчанию уровень &lt;code&gt;info&lt;&#x2F;code&gt; не проходит.&lt;&#x2F;p&gt;
+&lt;p&gt;Быстрая проверка:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;DEFMT_LOG&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt;=&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;i&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;n&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;f&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;o&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt; cargo&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-release&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Чтобы не выставлять переменную каждый раз, можно прописать её в &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;toml&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;env&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);&quot;&gt;]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;DEFMT_LOG&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#179299, #94E2D5);&quot;&gt; =&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;info&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;&amp;quot;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;itogovyi-chek-list&quot;&gt;Итоговый чек-лист&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;defmt&lt;&#x2F;code&gt; + &lt;code&gt;defmt-rtt&lt;&#x2F;code&gt; в зависимостях, &lt;code&gt;rtt-target&lt;&#x2F;code&gt; удалён&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;-Tdefmt.x&lt;&#x2F;code&gt; в &lt;code&gt;rustflags&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;use defmt_rtt as _;&lt;&#x2F;code&gt; в &lt;code&gt;main.rs&lt;&#x2F;code&gt;, старая &lt;code&gt;rtt_init_print!()&lt;&#x2F;code&gt; убрана&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;defmt::timestamp!&lt;&#x2F;code&gt; определена (иначе линковка падает)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;input disabled=&quot;&quot; type=&quot;checkbox&quot; checked=&quot;&quot;&#x2F;&gt;
+&lt;code&gt;DEFMT_LOG&lt;&#x2F;code&gt; выставлен (напрямую или через &lt;code&gt;[env]&lt;&#x2F;code&gt; в &lt;code&gt;.cargo&#x2F;config.toml&lt;&#x2F;code&gt;)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+        
+    </entry>
+</feed>

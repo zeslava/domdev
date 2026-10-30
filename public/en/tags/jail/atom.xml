@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>domdev - jail</title>
+    <subtitle>Writing about things I find interesting: development, systems administration, hardware.</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://domdev.su/en/tags/jail/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://domdev.su"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-10-29T00:00:00+00:00</updated>
+    <id>https://domdev.su/en/tags/jail/atom.xml</id>
+    <entry xml:lang="en">
+        <title>dail: running services in freebsd jails, docker-style</title>
+        <published>2026-10-29T00:00:00+00:00</published>
+        <updated>2026-10-29T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://domdev.su/en/dail/"/>
+        <id>https://domdev.su/en/dail/</id>
+        
+        <content type="html" xml:base="https://domdev.su/en/dail/">&lt;p&gt;I&#x27;m new to FreeBSD. Most of my experience is with Linux, but at some point the FreeBSD philosophy caught my eye:
+stability, a coherent system, and the fact that many things were done there long ago — well before Linux. Jails, for example — they&#x27;ve been around since 2000.
+So I decided to build my home server on FreeBSD.&lt;&#x2F;p&gt;
+&lt;p&gt;The first question was: how do I run services in isolation? On Linux there&#x27;s Docker — describe it and run it.
+I wanted the same here: keep the host clean and skip the hassle.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;why-build-my-own&quot;&gt;Why build my own&lt;&#x2F;h2&gt;
+&lt;p&gt;FreeBSD already has jails — isolation built right into the system. What was missing was a convenient way to use them.&lt;&#x2F;p&gt;
+&lt;p&gt;I looked at the existing tools, but none of them clicked. Bastille looked decent, but like most of the others it&#x27;s a set of scripts around jails.
+I like the idea of a static binary: download it and run it.&lt;&#x2F;p&gt;
+&lt;p&gt;And of course I wanted to build my own (what&#x27;s life without reinventing the wheel).&lt;&#x2F;p&gt;
+&lt;p&gt;That&#x27;s how &lt;strong&gt;dail&lt;&#x2F;strong&gt; — daily jail management (&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;zeslava&#x2F;dail&quot;&gt;github&lt;&#x2F;a&gt;) came about.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;sensible-defaults&quot;&gt;Sensible defaults&lt;&#x2F;h2&gt;
+&lt;p&gt;I carried over what I liked about Docker, with a focus on having to specify almost nothing.
+If something can be reasonably guessed, dail guesses it.&lt;&#x2F;p&gt;
+&lt;p&gt;For example, here&#x27;s the entire file for zid, my home OIDC server:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;docker&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; 15.0-RELEASE&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;SERVICE zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;EXPOSE&lt;&#x2F;span&gt;&lt;span&gt; 5555&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; target&#x2F;release&#x2F;zid &#x2F;usr&#x2F;local&#x2F;bin&#x2F;zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .env &#x2F;usr&#x2F;local&#x2F;etc&#x2F;zid&#x2F;zid.env&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;And to run it:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid.dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-ip&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#FE640B, #FAB387);&quot;&gt; 10.100.0.4&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-rebuild&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;What I didn&#x27;t have to write:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;the jail name — taken from the file name&lt;&#x2F;li&gt;
+&lt;li&gt;the start command — &lt;code&gt;SERVICE zid&lt;&#x2F;code&gt; runs &lt;code&gt;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;zid&lt;&#x2F;code&gt; by default&lt;&#x2F;li&gt;
+&lt;li&gt;the user, group, rc.conf — &lt;code&gt;SERVICE&lt;&#x2F;code&gt; handles them&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;An IP is assigned automatically by default, but I keep zid on a fixed one — other services depend on it.&lt;&#x2F;p&gt;
+&lt;p&gt;The defaults came from practice. Most of what I run are services, so &lt;code&gt;SERVICE&lt;&#x2F;code&gt; was the first directive.
+With it I needed to create a user inside the jail — and every time I named it after the service.
+So I made that the default.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;how-i-use-it-day-to-day&quot;&gt;How I use it day to day&lt;&#x2F;h2&gt;
+&lt;p&gt;The usual loop looks like this:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt;#&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; edit the code&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;cargo&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; build&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-release&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid.dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-ip&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#FE640B, #FAB387);&quot;&gt; 10.100.0.4&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-rebuild&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; logs&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Even though the name says daily, I actually don&#x27;t use dail that often.
+I log in, build the service, rebuild the jail with one command — and forget about it. After that it just keeps running:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;$ dail ls&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;NAME          STATUS   JID  IP              PORTS                           BASE          TYPE  UPTIME&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;--------------------------------------------------------------------------------------------------------&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;valkey        running  2    10.100.0.6&#x2F;24   6379-&amp;gt;6379&#x2F;tcp                  15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;pg            running  1    10.100.0.2&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;filest        running  6    10.100.0.5&#x2F;24   8090-&amp;gt;8090&#x2F;tcp, 8090-&amp;gt;8090&#x2F;udp  15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;zid-pg        running  7    10.100.0.3&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;cfgy-pg       running  9    10.100.0.7&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;cfgy          running  22   10.100.0.8&#x2F;24   8080-&amp;gt;8080&#x2F;tcp                  15.0-RELEASE  thin  21d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;aurora        running  72   inherit         4000-&amp;gt;4000&#x2F;tcp                  15.1-RELEASE  thin  9d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;zid           running  78   10.100.0.4&#x2F;24   5555-&amp;gt;5555&#x2F;tcp                  15.0-RELEASE  thin  5d 7h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;domdev        running  148  10.100.0.12&#x2F;24  8300-&amp;gt;8080&#x2F;tcp                  15.0-RELEASE  thin  4d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Some of these jails haven&#x27;t been restarted in over 44 days.&lt;&#x2F;p&gt;
+&lt;p&gt;I count that as a success. And it shows that same FreeBSD philosophy: set it up, start it, forget it.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;what-s-running&quot;&gt;What&#x27;s running&lt;&#x2F;h2&gt;
+&lt;p&gt;Currently living in jails:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;zid&lt;&#x2F;strong&gt; — identity provider (OIDC)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;cfgy&lt;&#x2F;strong&gt; — configuration management&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;aurora&lt;&#x2F;strong&gt; — home media center&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;filest&lt;&#x2F;strong&gt; — a simple REST file server&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;domdev&lt;&#x2F;strong&gt; — this blog&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;pg&lt;&#x2F;strong&gt;, &lt;strong&gt;zid-pg&lt;&#x2F;strong&gt;, &lt;strong&gt;cfgy-pg&lt;&#x2F;strong&gt; — a separate postgres for each service&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;valkey&lt;&#x2F;strong&gt; — cache for the services&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Each service in its own jail, the host stays clean.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;what-s-still-missing&quot;&gt;What&#x27;s still missing&lt;&#x2F;h2&gt;
+&lt;p&gt;Not everything is perfect:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Autostart.&lt;&#x2F;strong&gt; After a server reboot, all jails have to be brought up by hand.
+An autostart mode is planned — it will most likely need some kind of daemon.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Networking.&lt;&#x2F;strong&gt; By default a jail gets an IP alias on &lt;code&gt;lo0&lt;&#x2F;code&gt;, and dail writes port forwarding rules into PF itself. But outbound access (NAT) and the bridge for VNET are still configured by hand — I&#x27;d like dail to handle that too.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;&#x2F;h2&gt;
+&lt;p&gt;dail is my way to run services on FreeBSD as easily as with Docker.
+One binary, a short &lt;code&gt;.dail&lt;&#x2F;code&gt; file and one command to rebuild.&lt;&#x2F;p&gt;
+&lt;p&gt;If you&#x27;ve also come to FreeBSD from the world of Linux and Docker — give it a try, feedback is welcome: &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;zeslava&#x2F;dail&quot;&gt;github.com&#x2F;zeslava&#x2F;dail&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>

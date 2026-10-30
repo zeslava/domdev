@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>db-mcp: подключаем бд к ии — domdev</title>
+        <link rel="stylesheet" href="https://domdev.su/main.css" />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon.svg"
+            type="image/svg+xml"
+        />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon-120.png"
+            type="image/png"
+            sizes="120x120"
+        />
+        <link rel="apple-touch-icon" href="https://domdev.su/favicon.png" />
+               
+         
+        <meta name="description" content="Легкий MCP-сервер для подключения к БД написанный на Rust, позволяющий Claude и другим инструментам запрашивать данные из PostgreSQL, MySQL, SQLite и ClickHouse безопасно и приватно" />
+         
+        <link rel="canonical" href="https://domdev.su/db-mcp/" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://domdev.su/db-mcp/" />
+        <meta property="og:site_name" content="domdev" />
+        <meta property="og:locale" content="ru_RU" />
+        <meta property="og:title" content="db-mcp: подключаем бд к ии — domdev" />
+        
+        <meta property="og:description" content="Легкий MCP-сервер для подключения к БД написанный на Rust, позволяющий Claude и другим инструментам запрашивать данные из PostgreSQL, MySQL, SQLite и ClickHouse безопасно и приватно" />
+        
+        <meta property="og:image" content="https://domdev.su/favicon.png" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="db-mcp: подключаем бд к ии — domdev" />
+        
+        <meta name="twitter:description" content="Легкий MCP-сервер для подключения к БД написанный на Rust, позволяющий Claude и другим инструментам запрашивать данные из PostgreSQL, MySQL, SQLite и ClickHouse безопасно и приватно" />
+        
+        <meta name="twitter:image" content="https://domdev.su/favicon.png" />
+         
+        <link
+            rel="alternate"
+            type="application/atom+xml"
+            title="domdev"
+            href="https://domdev.su/atom.xml"
+        />
+          
+        <link
+            rel="alternate"
+            hreflang="ru"
+            href="https://domdev.su/db-mcp/"
+        />
+        
+        <link
+            rel="alternate"
+            hreflang="x-default"
+            href="https://domdev.su/db-mcp/"
+        />
+         
+        <link
+            rel="alternate"
+            hreflang="en"
+            href="https://domdev.su/en/db-mcp/"
+        />
+          
+    </head>
+    <body>
+        <header>
+            <nav>
+                <a href="https:&#x2F;&#x2F;domdev.su">domdev</a>
+                <a href="https://domdev.su/tags">теги</a>
+                <div class="lang-switcher">
+                         
+                    <a href="https:&#x2F;&#x2F;domdev.su&#x2F;en&#x2F;db-mcp&#x2F;">EN</a>
+                     
+                </div>
+            </nav>
+        </header>
+        <main>
+<article class="post">
+  <header>
+    <h1>db-mcp: подключаем бд к ии</h1>
+    <time>2026-05-30</time>
+    
+    <div class="tags">
+      
+      <a href="https://domdev.su/tags/db/">#db</a>
+      
+      <a href="https://domdev.su/tags/ai/">#ai</a>
+      
+      <a href="https://domdev.su/tags/mcp/">#mcp</a>
+      
+    </div>
+    
+  </header>
+  <div class="content">
+    <p>Нужна была приватная утилита для работы и домашних проектов: читать данные из баз, но ничего не писать.
+Готовые решения не понравились, а те что были — JS/Python-пакеты.
+А мне нужен был просто бинарь: скачал и запустил, без всяких Node.js и прочих.
+Плюс всегда есть желание сделать что-то своё :)</p>
+<p>Так появился <strong>db-mcp</strong> (<a rel="external" href="https://github.com/zeslava/db-mcp">github</a>) — небольшой бинарь, который:</p>
+<ul>
+<li>Читает данные из PostgreSQL, MySQL/MariaDB, SQLite и ClickHouse через URL-схему</li>
+<li>Работает с Claude, OpenCode, Jan, Zed и другими MCP-клиентами</li>
+<li>Простой и безопасный: только SELECT, параметризованные запросы</li>
+<li>Собирается один раз со всеми бэкендами сразу — выбираете БД при запуске</li>
+<li>Под Linux — полностью статический бинарь (musl, без glibc в рантайме)</li>
+</ul>
+<h2 id="pochemu-eto-bylo-nuzhno">Почему это было нужно</h2>
+<p>На работе часто нужно давать Claude доступ к данным: достать информацию, проанализировать, помочь с контекстом для написания скриптов. Нужно было:</p>
+<ul>
+<li><strong>Безопасно</strong> (только чтение, параметризованные запросы)</li>
+<li><strong>Приватно</strong> (работает локально, ничего не отправляется в облако)</li>
+<li><strong>Универсально</strong> (не только Claude — я использую OpenCode, Zed, Jan для разных задач)</li>
+</ul>
+<h2 id="kak-eto-rabotaet">Как это работает</h2>
+<p><strong>db-mcp</strong> — это stdio MCP-сервер на Rust. URL базы передаётся флагом <code>--database-url</code> или переменной <code>DATABASE_URL</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);"> postgres://user:pass@localhost:5432/mydb</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);"> mysql://user:pass@localhost:3306/mydb</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);"> sqlite:///absolute/path/to/data.db</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);"> clickhouse://default:pass@localhost:8123/default</span></span></code></pre>
+<p>Сервер определяет движок по схеме URL и подключается. Дальше Claude/OpenCode/Jan может использовать три инструмента:</p>
+<table><thead><tr><th>Tool</th><th>Параметры</th><th>Что делает</th></tr></thead><tbody>
+<tr><td><code>list_tables</code></td><td>—</td><td>Список пользовательских таблиц</td></tr>
+<tr><td><code>describe_table</code></td><td><code>table</code>, <code>schema?</code></td><td>Колонки, типы, nullability</td></tr>
+<tr><td><code>query</code></td><td><code>sql</code></td><td>Выполняет SELECT, возвращает JSON-строки</td></tr>
+</tbody></table>
+<p><code>query</code> возвращает обычный JSON, так что модель получает реальные значения, с которыми можно работать:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">[</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  {</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">id</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#FE640B, #FAB387);"> 1</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">email</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">ada@example.com</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">created_at</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">2026-05-01 09:12:33</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);"> }</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  {</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">id</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#FE640B, #FAB387);"> 2</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">email</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">linus@example.com</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#7C7F93, #9399B2);"> &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">created_at</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">2026-05-03 14:50:01</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);"> }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">]</span></span></code></pre><h3 id="bezopasnost-po-dizainu">Безопасность по дизайну</h3>
+<p>Ограничение «только SELECT» живёт в сервере, а не в адаптерах. Всё, что не начинается с <code>SELECT</code> (без учёта регистра, после <code>trim</code>), отклоняется — это блокирует и трюки с CTE вроде <code>WITH ... INSERT ... RETURNING</code>. Каждый адаптер использует параметризованные запросы, никакой конкатенации SQL строками. Для дополнительного слоя защиты подключайтесь под ролью с правами только на чтение.</p>
+<h2 id="nastroika-dlia-raznykh-instrumentov">Настройка для разных инструментов</h2>
+<p>Все клиенты запускают один и тот же бинарь, отличается только путь к конфигу. Я предпочитаю передавать URL через <code>DATABASE_URL</code>, чтобы он не светился в списке аргументов.</p>
+<h3 id="claude-code-cli">Claude Code (CLI)</h3>
+<p><strong>cli</strong></p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">claude</span><span style="color: light-dark(#40A02B, #A6E3A1);"> mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> add</span><span style="color: light-dark(#40A02B, #A6E3A1);"> db</span><span style="color: light-dark(#EA76CB, #F5C2E7);"> \</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">  -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-env</span><span style="color: light-dark(#40A02B, #A6E3A1);"> DATABASE_URL=postgres://user:pass@localhost:5432/mydb</span><span style="color: light-dark(#EA76CB, #F5C2E7);"> \</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">  -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-</span><span style="color: light-dark(#40A02B, #A6E3A1);"> /absolute/path/to/db-mcp</span></span></code></pre>
+<p><strong>claude.json</strong></p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">{</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">mcpServers</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">db-mcp</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">type</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">stdio</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">command</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">/absolute/path/to/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">args</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> [</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">env</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">        &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">DATABASE_URL</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">postgres://user:pass@localhost:5432/mydb</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">}</span></span></code></pre>
+<p>Перезагружаем Claude — инструменты появляются.</p>
+<h3 id="opencode">OpenCode</h3>
+<p>В <code>opencode.json</code> (в проекте или <code>~/.config/opencode/opencode.json</code>):</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">{</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">$schema</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">https://opencode.ai/config.json</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">mcp</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">database</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">type</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">local</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">command</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> [</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">--database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">sqlite:///home/me/work/data.sqlite</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">enabled</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#FE640B, #FAB387);"> true</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">}</span></span></code></pre><h3 id="jan">Jan</h3>
+<p>Jan имеет встроенную поддержку MCP (Settings → MCP Servers). Эквивалентный конфиг — запись command + args + env:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">{</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">database</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">command</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">/absolute/path/to/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">args</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> [</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">env</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">DATABASE_URL</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">postgres://prod.example.com:5432/analytics</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">}</span></span></code></pre><h3 id="zed">Zed</h3>
+<p>В <code>settings.json</code> (кастомные MCP-серверы живут в <code>context_servers</code>, а не в <code>lsp</code>):</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">{</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">context_servers</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">db-mcp</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">enabled</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#FE640B, #FAB387);"> true</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">remote</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#FE640B, #FAB387);"> false</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">command</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">/absolute/path/to/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">args</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> [</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">env</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#7C7F93, #9399B2);"> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">        &quot;</span><span style="color: light-dark(#1E66F5, #89B4FA);">DATABASE_URL</span><span style="color: light-dark(#7C7F93, #9399B2);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">:</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">postgres://user:pass@localhost:5432/mydb</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">      }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">    }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">  }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">}</span></span></code></pre><h2 id="na-praktike">На практике</h2>
+<h3 id="stsenarii-1-pomoshch-s-kontekstom-pri-razrabotke">Сценарий 1: помощь с контекстом при разработке</h3>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>Я в Claude Code:</span></span>
+<span class="giallo-l"><span>&quot;Помоги написать миграцию для добавления нового поля.</span></span>
+<span class="giallo-l"><span>Посмотри текущую структуру таблицы users.&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Claude:</span></span>
+<span class="giallo-l"><span>1. Дёргает db-mcp (describe_table) → узнаёт текущую схему</span></span>
+<span class="giallo-l"><span>2. Видит какие поля уже есть, какие constraints</span></span>
+<span class="giallo-l"><span>3. Генерирует правильную миграцию для именно вашей БД</span></span></code></pre><h3 id="stsenarii-2-analiz-dannykh-v-opencode">Сценарий 2: анализ данных в OpenCode</h3>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>В OpenCode анализирую метрики:</span></span>
+<span class="giallo-l"><span>&quot;Сколько активных пользователей в этом месяце?</span></span>
+<span class="giallo-l"><span>Какие самые популярные функции?&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>OpenCode использует db-mcp (query), модель смотрит реальные данные</span></span>
+<span class="giallo-l"><span>и даёт анализ с конкретными цифрами.</span></span></code></pre><h3 id="stsenarii-3-otladka-v-jan">Сценарий 3: отладка в Jan</h3>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>Jan с db-mcp помогает разобраться с багом:</span></span>
+<span class="giallo-l"><span>&quot;В таблице orders есть записи без user_id?&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>Jan запрашивает через db-mcp, видит что есть 12 таких,</span></span>
+<span class="giallo-l"><span>предлагает как это почистить.</span></span></code></pre><h2 id="ustanovka">Установка</h2>
+<p>Быстрая установка (Linux и macOS Apple Silicon) — определяет ОС/архитектуру, проверяет контрольную сумму, по умолчанию ставит в <code>~/.local/bin</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">curl</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-proto</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &#39;</span><span style="color: light-dark(#40A02B, #A6E3A1);">=https</span><span style="color: light-dark(#40A02B, #A6E3A1);">&#39;</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-tlsv1.2</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">sSf</span><span style="color: light-dark(#EA76CB, #F5C2E7);"> \</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">  https://raw.githubusercontent.com/zeslava/db-mcp/main/install.sh</span><span style="color: light-dark(#179299, #94E2D5);"> |</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;"> sh</span></span></code></pre>
+<p>Или скачиваете тарболл из релизов вручную (Linux x86_64/aarch64, macOS arm64, Windows x86_64):</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span>TARGET</span><span style="color: light-dark(#179299, #94E2D5);">=</span><span style="color: light-dark(#40A02B, #A6E3A1);">x</span><span style="color: light-dark(#40A02B, #A6E3A1);">8</span><span style="color: light-dark(#40A02B, #A6E3A1);">6</span><span style="color: light-dark(#40A02B, #A6E3A1);">_</span><span style="color: light-dark(#40A02B, #A6E3A1);">6</span><span style="color: light-dark(#40A02B, #A6E3A1);">4</span><span style="color: light-dark(#40A02B, #A6E3A1);">-</span><span style="color: light-dark(#40A02B, #A6E3A1);">u</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">k</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">o</span><span style="color: light-dark(#40A02B, #A6E3A1);">w</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">-</span><span style="color: light-dark(#40A02B, #A6E3A1);">l</span><span style="color: light-dark(#40A02B, #A6E3A1);">i</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">u</span><span style="color: light-dark(#40A02B, #A6E3A1);">x</span><span style="color: light-dark(#40A02B, #A6E3A1);">-</span><span style="color: light-dark(#40A02B, #A6E3A1);">g</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">u</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">curl</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">sSL</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">https://github.com/zeslava/db-mcp/releases/latest/download/db-mcp-</span><span>$</span><span>{</span><span>TARGET</span><span>}</span><span style="color: light-dark(#40A02B, #A6E3A1);">.tar.gz</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#EA76CB, #F5C2E7);"> \</span></span>
+<span class="giallo-l"><span style="color: light-dark(#179299, #94E2D5);">  |</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;"> tar</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">xz</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">install</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">m</span><span style="color: light-dark(#FE640B, #FAB387);"> 755</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">db-mcp-</span><span>$</span><span>{</span><span>TARGET</span><span>}</span><span style="color: light-dark(#40A02B, #A6E3A1);">/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span>$</span><span>HOME</span><span style="color: light-dark(#40A02B, #A6E3A1);">/.local/bin/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre>
+<p>Или собираете сами:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">git</span><span style="color: light-dark(#40A02B, #A6E3A1);"> clone</span><span style="color: light-dark(#40A02B, #A6E3A1);"> https://github.com/zeslava/db-mcp</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D20F39, #F38BA8);font-style: italic;">cd</span><span style="color: light-dark(#40A02B, #A6E3A1);"> db-mcp</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">cargo</span><span style="color: light-dark(#40A02B, #A6E3A1);"> build</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-release</span></span>
+<span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">./target/release/db-mcp</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-database-url</span><span style="color: light-dark(#40A02B, #A6E3A1);"> postgres://localhost/mydb</span></span></code></pre><h2 id="preimushchestva-takogo-podkhoda">Преимущества такого подхода</h2>
+<ul>
+<li>✅ Один бинарь для четырёх движков (PostgreSQL, MySQL/MariaDB, SQLite, ClickHouse)</li>
+<li>✅ Работает везде: Claude, OpenCode, Jan, Zed, любой MCP-клиент</li>
+<li>✅ Никакого runtime (JS, Python) — чистый Rust, статический бинарь</li>
+<li>✅ Безопасно по дизайну: только SELECT, параметризованные запросы</li>
+<li>✅ Приватно: работает локально или в вашей инфре</li>
+<li>✅ Простая настройка: просто URL БД</li>
+</ul>
+<h2 id="dal-she-v-planakh">Дальше в планах:</h2>
+<ul>
+<li>Поддержка других БД (и не только бд)</li>
+<li>Логирование и аудит запросов</li>
+<li>Ограничение доступа по таблицам (для более узких прав)</li>
+<li>Режим сервера</li>
+</ul>
+
+  </div>
+</article>
+</main>
+        <footer>
+            <p>2026</p>
+        </footer>
+    </body>
+</html>

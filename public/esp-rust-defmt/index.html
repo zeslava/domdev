@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>esp rust: настройка defmt — domdev</title>
+        <link rel="stylesheet" href="https://domdev.su/main.css" />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon.svg"
+            type="image/svg+xml"
+        />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon-120.png"
+            type="image/png"
+            sizes="120x120"
+        />
+        <link rel="apple-touch-icon" href="https://domdev.su/favicon.png" />
+               
+         
+        <meta name="description" content="Заметка по настройке defmt" />
+         
+        <link rel="canonical" href="https://domdev.su/esp-rust-defmt/" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://domdev.su/esp-rust-defmt/" />
+        <meta property="og:site_name" content="domdev" />
+        <meta property="og:locale" content="ru_RU" />
+        <meta property="og:title" content="esp rust: настройка defmt — domdev" />
+        
+        <meta property="og:description" content="Заметка по настройке defmt" />
+        
+        <meta property="og:image" content="https://domdev.su/favicon.png" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="esp rust: настройка defmt — domdev" />
+        
+        <meta name="twitter:description" content="Заметка по настройке defmt" />
+        
+        <meta name="twitter:image" content="https://domdev.su/favicon.png" />
+         
+        <link
+            rel="alternate"
+            type="application/atom+xml"
+            title="domdev"
+            href="https://domdev.su/atom.xml"
+        />
+          
+        <link
+            rel="alternate"
+            hreflang="ru"
+            href="https://domdev.su/esp-rust-defmt/"
+        />
+        
+        <link
+            rel="alternate"
+            hreflang="x-default"
+            href="https://domdev.su/esp-rust-defmt/"
+        />
+         
+        <link
+            rel="alternate"
+            hreflang="en"
+            href="https://domdev.su/en/esp-rust-defmt/"
+        />
+          
+    </head>
+    <body>
+        <header>
+            <nav>
+                <a href="https:&#x2F;&#x2F;domdev.su">domdev</a>
+                <a href="https://domdev.su/tags">теги</a>
+                <div class="lang-switcher">
+                         
+                    <a href="https:&#x2F;&#x2F;domdev.su&#x2F;en&#x2F;esp-rust-defmt&#x2F;">EN</a>
+                     
+                </div>
+            </nav>
+        </header>
+        <main>
+<article class="post">
+  <header>
+    <h1>esp rust: настройка defmt</h1>
+    <time>2026-07-06</time>
+    
+    <div class="tags">
+      
+      <a href="https://domdev.su/tags/esp/">#esp</a>
+      
+      <a href="https://domdev.su/tags/rust/">#rust</a>
+      
+    </div>
+    
+  </header>
+  <div class="content">
+    <h2 id="nastroika-defmt-na-esp32-c6-esp-hal-probe-rs">Настройка defmt на ESP32-C6 (esp-hal + probe-rs)</h2>
+<p>Заметка по переходу с <code>rtt-target</code> на <code>defmt</code> для логирования через RTT.</p>
+<h2 id="1-zavisimosti">1. Зависимости</h2>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="toml"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">[</span><span>dependencies</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span></span>
+<span class="giallo-l"><span>defmt</span><span style="color: light-dark(#179299, #94E2D5);">     =</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">1.1.1</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span>
+<span class="giallo-l"><span>defmt-rtt</span><span style="color: light-dark(#179299, #94E2D5);"> =</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">1.3.0</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre>
+<p><code>rtt-target</code> можно удалить — его заменяет <code>defmt-rtt</code>.</p>
+<h2 id="2-linkovka-sektsiia-defmt">2. Линковка: секция <code>.defmt</code></h2>
+<p>Ошибка при запуске:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>Error: Failed to parse defmt data</span></span>
+<span class="giallo-l"><span>defmt version found, but no `.defmt` section - check your linker configuration</span></span></code></pre>
+<p>Причина: линкер-скрипт <code>defmt.x</code> (идёт вместе с крейтом <code>defmt-rtt</code>) не подключён.</p>
+<p>Фикс: добавить флаг в <code>.cargo/config.toml</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="toml"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">[</span><span>build</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span></span>
+<span class="giallo-l"><span>rustflags</span><span style="color: light-dark(#179299, #94E2D5);"> =</span><span style="color: light-dark(#7C7F93, #9399B2);"> [</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">  &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">-C</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">link-arg=-Tdefmt.x</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">]</span></span></code></pre><h2 id="3-initsializatsiia-transporta">3. Инициализация транспорта</h2>
+<p><code>defmt</code> сам по себе только форматирует сообщения — куда их слать, решает отдельный крейт-транспорт.
+Раз в проекте уже был RTT-канал (через <code>rtt-target</code>), логичный выбор — <code>defmt-rtt</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="rust"><span class="giallo-l"><span style="color: light-dark(#8839EF, #CBA6F7);">use</span><span> defmt_rtt </span><span style="color: light-dark(#8839EF, #CBA6F7);">as</span><span> _</span><span style="color: light-dark(#7C7F93, #9399B2);">;</span><span style="color: light-dark(#7C7F93, #9399B2);font-style: italic;"> //</span><span style="color: light-dark(#7C7F93, #9399B2);font-style: italic;"> подключает RTT как транспорт для defmt</span></span></code></pre>
+<p>Важно: <code>rtt_target::rtt_init_print!()</code> нужно убрать — два способа инициализировать RTT-канал конфликтуют.</p>
+<h2 id="4-obiazatel-naia-vremennaia-metka">4. Обязательная временная метка</h2>
+<p>Без неё сборка падает на линковке:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>undefined symbol: _defmt_timestamp</span></span></code></pre>
+<p>Каждый defmt-фрейм включает timestamp по протоколу, поэтому нужно явно её задать:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="rust"><span class="giallo-l"><span style="color: light-dark(#DF8E1D, #F9E2AF);">defmt</span><span style="color: light-dark(#179299, #94E2D5);">::</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">timestamp!</span><span style="color: light-dark(#7C7F93, #9399B2);">(</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">    &quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">{</span><span style="color: light-dark(#40A02B, #A6E3A1);">=u64:us</span><span style="color: light-dark(#7C7F93, #9399B2);">}</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#DF8E1D, #F9E2AF);">    esp_hal</span><span style="color: light-dark(#179299, #94E2D5);">::</span><span style="color: light-dark(#DF8E1D, #F9E2AF);">time</span><span style="color: light-dark(#179299, #94E2D5);">::</span><span style="color: light-dark(#DF8E1D, #F9E2AF);font-style: italic;">Instant</span><span style="color: light-dark(#179299, #94E2D5);">::</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">now</span><span style="color: light-dark(#7C7F93, #9399B2);">(</span><span style="color: light-dark(#7C7F93, #9399B2);">)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#179299, #94E2D5);">        .</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">duration_since_epoch</span><span style="color: light-dark(#7C7F93, #9399B2);">(</span><span style="color: light-dark(#7C7F93, #9399B2);">)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#179299, #94E2D5);">        .</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">as_micros</span><span style="color: light-dark(#7C7F93, #9399B2);">(</span><span style="color: light-dark(#7C7F93, #9399B2);">)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">)</span><span style="color: light-dark(#7C7F93, #9399B2);">;</span></span></code></pre>
+<p>Где <code>:us</code> говорит хосту (probe-rs) отформатировать число как секунды с дробной частью
+(например, <code>12.345678</code>), а не выводить сырые микросекунды.</p>
+<p>Если метка не нужна вообще — можно оставить пустой формат, символ всё равно останется
+определён для линковки:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="rust"><span class="giallo-l"><span style="color: light-dark(#DF8E1D, #F9E2AF);">defmt</span><span style="color: light-dark(#179299, #94E2D5);">::</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">timestamp!</span><span style="color: light-dark(#7C7F93, #9399B2);">(</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#7C7F93, #9399B2);">)</span><span style="color: light-dark(#7C7F93, #9399B2);">;</span></span></code></pre><h2 id="5-sobiraetsia-no-nichego-ne-pechataet">5. "Собирается, но ничего не печатает"</h2>
+<p>Вероятная причина — уровень логов не выставлен через переменную окружения <code>DEFMT_LOG</code> (аналог <code>RUST_LOG</code> из <code>env_logger</code>).
+По умолчанию уровень <code>info</code> не проходит.</p>
+<p>Быстрая проверка:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span>DEFMT_LOG</span><span style="color: light-dark(#179299, #94E2D5);">=</span><span style="color: light-dark(#40A02B, #A6E3A1);">i</span><span style="color: light-dark(#40A02B, #A6E3A1);">n</span><span style="color: light-dark(#40A02B, #A6E3A1);">f</span><span style="color: light-dark(#40A02B, #A6E3A1);">o</span><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;"> cargo</span><span style="color: light-dark(#40A02B, #A6E3A1);"> run</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">-release</span></span></code></pre>
+<p>Чтобы не выставлять переменную каждый раз, можно прописать её в <code>.cargo/config.toml</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="toml"><span class="giallo-l"><span style="color: light-dark(#7C7F93, #9399B2);">[</span><span>env</span><span style="color: light-dark(#7C7F93, #9399B2);">]</span></span>
+<span class="giallo-l"><span>DEFMT_LOG</span><span style="color: light-dark(#179299, #94E2D5);"> =</span><span style="color: light-dark(#40A02B, #A6E3A1);"> &quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">info</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre><h2 id="itogovyi-chek-list">Итоговый чек-лист</h2>
+<ul>
+<li><input disabled="" type="checkbox" checked=""/>
+<code>defmt</code> + <code>defmt-rtt</code> в зависимостях, <code>rtt-target</code> удалён</li>
+<li><input disabled="" type="checkbox" checked=""/>
+<code>-Tdefmt.x</code> в <code>rustflags</code></li>
+<li><input disabled="" type="checkbox" checked=""/>
+<code>use defmt_rtt as _;</code> в <code>main.rs</code>, старая <code>rtt_init_print!()</code> убрана</li>
+<li><input disabled="" type="checkbox" checked=""/>
+<code>defmt::timestamp!</code> определена (иначе линковка падает)</li>
+<li><input disabled="" type="checkbox" checked=""/>
+<code>DEFMT_LOG</code> выставлен (напрямую или через <code>[env]</code> в <code>.cargo/config.toml</code>)</li>
+</ul>
+
+  </div>
+</article>
+</main>
+        <footer>
+            <p>2026</p>
+        </footer>
+    </body>
+</html>

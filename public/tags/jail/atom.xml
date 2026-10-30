@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="ru">
+    <title>domdev - jail</title>
+    <subtitle>Пишу о том, что мне интересно: разработка, системное администрирование, железо.</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://domdev.su/tags/jail/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://domdev.su"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2026-10-29T00:00:00+00:00</updated>
+    <id>https://domdev.su/tags/jail/atom.xml</id>
+    <entry xml:lang="ru">
+        <title>dail: запускаю сервисы во freebsd jail как в docker</title>
+        <published>2026-10-29T00:00:00+00:00</published>
+        <updated>2026-10-29T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://domdev.su/dail/"/>
+        <id>https://domdev.su/dail/</id>
+        
+        <content type="html" xml:base="https://domdev.su/dail/">&lt;p&gt;Я новичок во FreeBSD. Основной опыт у меня с Linux, но в какой-то момент приглянулась философия FreeBSD:
+стабильность, целостность системы и то, что многие вещи там были сделаны давно — сильно раньше, чем в Linux. Например, jail — они появились ещё в 2000 году.
+Так я решил сделать себе домашний сервер на FreeBSD.&lt;&#x2F;p&gt;
+&lt;p&gt;Сразу возник вопрос: как изолированно запускать сервисы? В Linux для этого есть Docker — описал и запустил.
+Хотелось так же: чтобы не засорять хост и без лишней возни.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;pochemu-svoio-a-ne-chto-to-gotovoe&quot;&gt;Почему своё, а не что-то готовое&lt;&#x2F;h2&gt;
+&lt;p&gt;Во FreeBSD уже есть jail — изоляция прямо в системе. Не хватало только удобного способа ими пользоваться.&lt;&#x2F;p&gt;
+&lt;p&gt;Я посмотрел существующие инструменты, но ни один не понравился. Bastille выглядел прилично, но, как и большинство других, это набор скриптов вокруг jail.
+А мне близка идея статического бинаря: скачал и запустил.&lt;&#x2F;p&gt;
+&lt;p&gt;Ну и, конечно, хотелось сделать своё (куда ж без велосипедостроения).&lt;&#x2F;p&gt;
+&lt;p&gt;Так появился &lt;strong&gt;dail&lt;&#x2F;strong&gt; — daily jail management (&lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;zeslava&#x2F;dail&quot;&gt;github&lt;&#x2F;a&gt;).&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;ozhidaemoe-povedenie-po-umolchaniiu&quot;&gt;Ожидаемое поведение по умолчанию&lt;&#x2F;h2&gt;
+&lt;p&gt;Я перенёс то, что нравилось в Docker, но с упором на то, чтобы почти ничего не нужно было указывать.
+Если что-то можно разумно угадать — dail угадывает.&lt;&#x2F;p&gt;
+&lt;p&gt;Например, вот целиком файл для моего домашнего OIDC сервера zid:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;docker&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; 15.0-RELEASE&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;SERVICE zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;EXPOSE&lt;&#x2F;span&gt;&lt;span&gt; 5555&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; target&#x2F;release&#x2F;zid &#x2F;usr&#x2F;local&#x2F;bin&#x2F;zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#8839EF, #CBA6F7);&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .env &#x2F;usr&#x2F;local&#x2F;etc&#x2F;zid&#x2F;zid.env&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;И запуск:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid.dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-ip&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#FE640B, #FAB387);&quot;&gt; 10.100.0.4&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-rebuild&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Что здесь не пришлось писать:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;имя jail — берётся из имени файла&lt;&#x2F;li&gt;
+&lt;li&gt;команду запуска — &lt;code&gt;SERVICE zid&lt;&#x2F;code&gt; по умолчанию запускает &lt;code&gt;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;zid&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;пользователя, группу, rc.conf — &lt;code&gt;SERVICE&lt;&#x2F;code&gt; делает это сам&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;IP по умолчанию выдаётся сам, но zid держу на фиксированном — на него завязаны другие сервисы.&lt;&#x2F;p&gt;
+&lt;p&gt;Умолчания появлялись из практики. У меня в основном сервисы, поэтому первой появилась директива &lt;code&gt;SERVICE&lt;&#x2F;code&gt;.
+Вместе с ней понадобилось заводить внутри jail пользователя — и я каждый раз называл его так же, как сервис.
+Раз так, вынес это в поведение по умолчанию.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;kak-ia-pol-zuius-kazhdyi-den&quot;&gt;Как я пользуюсь каждый день&lt;&#x2F;h2&gt;
+&lt;p&gt;Обычный цикл выглядит так:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt;#&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#7C7F93, #9399B2);font-style: italic;&quot;&gt; правлю код&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;cargo&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; build&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-release&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; run&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid.dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-ip&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#FE640B, #FAB387);&quot;&gt; 10.100.0.4&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; -&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt;-rebuild&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: light-dark(#1E66F5, #89B4FA);font-style: italic;&quot;&gt;doas&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; dail&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; logs&lt;&#x2F;span&gt;&lt;span style=&quot;color: light-dark(#40A02B, #A6E3A1);&quot;&gt; zid&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Хотя в названии и есть daily, на деле я пользуюсь dail не часто.
+Зашёл, собрал сервис, пересобрал jail одной командой — и забыл. Дальше оно просто стабильно работает:&lt;&#x2F;p&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);&quot;&gt;&lt;code data-lang=&quot;plain&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;$ dail ls&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;NAME          STATUS   JID  IP              PORTS                           BASE          TYPE  UPTIME&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;--------------------------------------------------------------------------------------------------------&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;valkey        running  2    10.100.0.6&#x2F;24   6379-&amp;gt;6379&#x2F;tcp                  15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;pg            running  1    10.100.0.2&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;filest        running  6    10.100.0.5&#x2F;24   8090-&amp;gt;8090&#x2F;tcp, 8090-&amp;gt;8090&#x2F;udp  15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;zid-pg        running  7    10.100.0.3&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;cfgy-pg       running  9    10.100.0.7&#x2F;24                                   15.0-RELEASE  thin  44d 4h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;cfgy          running  22   10.100.0.8&#x2F;24   8080-&amp;gt;8080&#x2F;tcp                  15.0-RELEASE  thin  21d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;aurora        running  72   inherit         4000-&amp;gt;4000&#x2F;tcp                  15.1-RELEASE  thin  9d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;zid           running  78   10.100.0.4&#x2F;24   5555-&amp;gt;5555&#x2F;tcp                  15.0-RELEASE  thin  5d 7h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;domdev        running  148  10.100.0.12&#x2F;24  8300-&amp;gt;8080&#x2F;tcp                  15.0-RELEASE  thin  4d 0h&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Часть jail не перезапускалась больше 44 дней.&lt;&#x2F;p&gt;
+&lt;p&gt;Считаю это успехом. И в этом, кстати, видна та самая философия FreeBSD: настроил, запустил и забыл.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;chto-u-menia-krutitsia&quot;&gt;Что у меня крутится&lt;&#x2F;h2&gt;
+&lt;p&gt;Сейчас в jail живут:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;zid&lt;&#x2F;strong&gt; — identity provider (OIDC)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;cfgy&lt;&#x2F;strong&gt; — управление конфигурацией&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;aurora&lt;&#x2F;strong&gt; — домашний медиацентр&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;filest&lt;&#x2F;strong&gt; — простой REST файл-сервер&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;domdev&lt;&#x2F;strong&gt; — блог&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;pg&lt;&#x2F;strong&gt;, &lt;strong&gt;zid-pg&lt;&#x2F;strong&gt;, &lt;strong&gt;cfgy-pg&lt;&#x2F;strong&gt; — отдельный postgres на каждый сервис&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;valkey&lt;&#x2F;strong&gt; — кеш для сервисов&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Каждый сервис в своём jail, хост остаётся чистым.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;chego-poka-ne-khvataet&quot;&gt;Чего пока не хватает&lt;&#x2F;h2&gt;
+&lt;p&gt;Не всё идеально:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Автозапуск.&lt;&#x2F;strong&gt; Если перезагрузить сервер, все jail приходится поднимать руками.
+В планах режим автозапуска — скорее всего, для этого понадобится что-то вроде демона.&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Сеть.&lt;&#x2F;strong&gt; По умолчанию jail получает IP-алиас на &lt;code&gt;lo0&lt;&#x2F;code&gt;, а проброс портов dail сам прописывает в PF. Но выход наружу (NAT) и bridge для VNET пока настраиваются руками — хочется, чтобы dail делал это сам.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;itog&quot;&gt;Итог&lt;&#x2F;h2&gt;
+&lt;p&gt;dail — это мой способ запускать сервисы на FreeBSD так же просто, как в Docker.
+Один бинарь, короткий &lt;code&gt;.dail&lt;&#x2F;code&gt; файл и одна команда на пересборку.&lt;&#x2F;p&gt;
+&lt;p&gt;Если вы тоже пришли во FreeBSD из мира Linux и Docker — попробуйте, буду рад обратной связи: &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;zeslava&#x2F;dail&quot;&gt;github.com&#x2F;zeslava&#x2F;dail&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>transmission на сервере freebsd — domdev</title>
+        <link rel="stylesheet" href="https://domdev.su/main.css" />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon.svg"
+            type="image/svg+xml"
+        />
+        <link
+            rel="icon"
+            href="https://domdev.su/favicon-120.png"
+            type="image/png"
+            sizes="120x120"
+        />
+        <link rel="apple-touch-icon" href="https://domdev.su/favicon.png" />
+               
+         
+        <meta name="description" content="Заметка по настройке transmission на сервере freebsd" />
+         
+        <link rel="canonical" href="https://domdev.su/transmission-freebsd-server/" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://domdev.su/transmission-freebsd-server/" />
+        <meta property="og:site_name" content="domdev" />
+        <meta property="og:locale" content="ru_RU" />
+        <meta property="og:title" content="transmission на сервере freebsd — domdev" />
+        
+        <meta property="og:description" content="Заметка по настройке transmission на сервере freebsd" />
+        
+        <meta property="og:image" content="https://domdev.su/favicon.png" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="transmission на сервере freebsd — domdev" />
+        
+        <meta name="twitter:description" content="Заметка по настройке transmission на сервере freebsd" />
+        
+        <meta name="twitter:image" content="https://domdev.su/favicon.png" />
+         
+        <link
+            rel="alternate"
+            type="application/atom+xml"
+            title="domdev"
+            href="https://domdev.su/atom.xml"
+        />
+          
+        <link
+            rel="alternate"
+            hreflang="en"
+            href="https://domdev.su/en/transmission-freebsd-server/"
+        />
+         
+        <link
+            rel="alternate"
+            hreflang="ru"
+            href="https://domdev.su/transmission-freebsd-server/"
+        />
+        
+        <link
+            rel="alternate"
+            hreflang="x-default"
+            href="https://domdev.su/transmission-freebsd-server/"
+        />
+          
+    </head>
+    <body>
+        <header>
+            <nav>
+                <a href="https:&#x2F;&#x2F;domdev.su">domdev</a>
+                <a href="https://domdev.su/tags">теги</a>
+                <div class="lang-switcher">
+                         
+                    <a href="https:&#x2F;&#x2F;domdev.su&#x2F;en&#x2F;transmission-freebsd-server&#x2F;">EN</a>
+                     
+                </div>
+            </nav>
+        </header>
+        <main>
+<article class="post">
+  <header>
+    <h1>transmission на сервере freebsd</h1>
+    <time>2026-08-05</time>
+    
+    <div class="tags">
+      
+      <a href="https://domdev.su/tags/freebsd/">#freebsd</a>
+      
+    </div>
+    
+  </header>
+  <div class="content">
+    <h2 id="ustanovka">Установка</h2>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">pkg</span><span style="color: light-dark(#40A02B, #A6E3A1);"> install</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission-daemon</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission-web</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission-cli</span></span></code></pre>
+<p><code>daemon</code> - нужен для установки службы</p>
+<p><code>web</code> - устанавливает web интерфейс</p>
+<p><code>cli</code> - для управления</p>
+<h2 id="nastroika">Настройка</h2>
+<h2 id="vkliuchenie-servisa-demona">Включение сервиса(демона)</h2>
+<p>Через <code>sysrc</code></p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">sysrc</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission_enable=</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">YES</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre>
+<p>либо руками прописать в <code>/etc/rc.conf</code></p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span>transmission_enable</span><span style="color: light-dark(#179299, #94E2D5);">=</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">YES</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre><h2 id="nastroika-settings-json">Настройка <code>settings.json</code></h2>
+<p>Файл конфигурации находится тут <code>/usr/local/etc/transmission/home/settings.json</code></p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>⚠️ Важно: </span></span>
+<span class="giallo-l"><span>Редактировать файл только при остановленной службе (service transmission stop), </span></span>
+<span class="giallo-l"><span>иначе Transmission сбросит все изменения.</span></span></code></pre>
+<p>Часть значений в <code>settings.json</code> определяется через переменные rc.conf, значения по умолчанию нахоядтся тут <code>/usr/local/etc/rc.d/transmission</code>.
+Полезный файл с описанием всех переменных, для чего они и какие значения по умолчанию.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="plain"><span class="giallo-l"><span>⚠️ Важно: </span></span>
+<span class="giallo-l"><span>Значения берутся из переменных, поэтому, если задать значение в settings.json, </span></span>
+<span class="giallo-l"><span>transmission может его перезаписать</span></span></code></pre><h2 id="nastroika-direktorii-dlia-zagruzok">Настройка директории для загрузок</h2>
+<p>Директория для загрузок настраивается через переменную в <code>rc.conf</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span>transmission_download_dir</span><span style="color: light-dark(#179299, #94E2D5);">=</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">/mnt/transmission/downloads</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span></span></code></pre>
+<p>По умолчанию <code>/usr/local/etc/transmission/home/Downloads</code></p>
+<h2 id="nastroika-dostupa">Настройка доступа</h2>
+<h3 id="prava-na-direktoriiu-zagruzok">Права на директорию загрузок</h3>
+<p>По умолчанию transmission работает под пользователем и группой transmission, поэтому для директории загрузок надо выставить права:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">chown</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">R</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission:transmission</span><span style="color: light-dark(#40A02B, #A6E3A1);"> /mnt/transmission/downloads</span></span></code></pre>
+<p>Можно так же добавить себя в группу transmission:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#1E66F5, #89B4FA);font-style: italic;">pw</span><span style="color: light-dark(#40A02B, #A6E3A1);"> groupmod</span><span style="color: light-dark(#40A02B, #A6E3A1);"> transmission</span><span style="color: light-dark(#40A02B, #A6E3A1);"> -</span><span style="color: light-dark(#40A02B, #A6E3A1);">m</span><span> $</span><span>USER</span></span></code></pre><h3 id="autentifikatsiia-po-loginu-proliu">Аутентификация по логину/пролю</h3>
+<p>Можно добавить доступ по логину/паролю:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-authentication-required</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#FE640B, #FAB387);">true</span><span>,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-username</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">ваш_логин</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-password</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">ваш_пароль</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>,</span></span></code></pre>
+<p>Если это в домашней сети и нет смысла во входе по логину/паролю, то можно отключить</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-authentication-required</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#FE640B, #FAB387);">false</span><span>,</span></span></code></pre><h3 id="ogranichenie-po-adresam">Ограничение по адресам</h3>
+<p>Можно настроить доступ с определенных устройств в сети,
+задается в параметре <code>rpc-whitelist</code> строкой со значениями через запятую и включением <code>rpc-whitelist-enabled</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-whitelist</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">127.0.0.1,192.168.1.2</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-whitelist-enabled</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#FE640B, #FAB387);">true</span><span>,</span></span></code></pre>
+<p>Есть аналогичная настройка, но для ограничения адресов, по которым будет открываться web интерфейс.</p>
+<p><code>rpc-host-whitelist</code> (слово host в названии), задается так же строкой со значениями через запятую:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#4C4F69, #CDD6F4); background-color: light-dark(#EFF1F5, #1E1E2E);"><code data-lang="json"><span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-host-whitelist</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">transmission.lan,192.168.1.10</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span style="color: light-dark(#40A02B, #A6E3A1);">rpc-host-whitelist-enabled</span><span style="color: light-dark(#40A02B, #A6E3A1);">&quot;</span><span>: </span><span style="color: light-dark(#FE640B, #FAB387);">true</span><span>,</span></span></code></pre>
+  </div>
+</article>
+</main>
+        <footer>
+            <p>2026</p>
+        </footer>
+    </body>
+</html>
