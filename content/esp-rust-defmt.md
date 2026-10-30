@@ -2,6 +2,9 @@
 title = "esp rust: настройка defmt"
 date = 2026-07-06
 description = "Заметка по настройке defmt"
+
+[taxonomies]
+tags = ["esp", "rust"]
 +++
 
 ## Настройка defmt на ESP32-C6 (esp-hal + probe-rs)

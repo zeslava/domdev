@@ -2,6 +2,9 @@
 title = "db-mcp: connect your database to AI"
 date = 2026-05-30
 description = "A lightweight MCP server written in Rust that lets Claude and other tools query PostgreSQL, MySQL, SQLite, and ClickHouse safely and privately"
+
+[taxonomies]
+tags = ["db", "ai", "mcp"]
 +++
 
 I needed a private utility for work and personal projects: read data from databases, but never write. Existing solutions weren't what I wanted — those that existed were JS/Python packages. I just needed a simple binary: download and run, without Node.js or other overhead. Plus, always nice to build something yourself :)

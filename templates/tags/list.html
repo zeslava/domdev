@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}{% if lang == "en" %}Tags{% else %}Теги{% endif %} — {{ config.title }}{% endblock %}
+
+{% block content %}
+<article class="post">
+  <header>
+    <h1>{% if lang == "en" %}Tags{% else %}Теги{% endif %}</h1>
+  </header>
+  <div class="tags">
+    {% for term in terms %}
+    <a href="{{ term.permalink }}">#{{ term.name }}</a>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}

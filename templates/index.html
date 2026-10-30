@@ -7,10 +7,16 @@
 </section>
 <section class="posts">
   {% for page in section.pages %}
-  <article>
-    <time>{{ page.date | date(format="%Y-%m-%d") }}</time>
-    <a href="{{ page.permalink }}">{{ page.title }}</a>
-  </article>
+  <a class="card" href="{{ page.permalink }}">
+    <h2>{{ page.title }}</h2>
+    {% if page.description %}<p>{{ page.description }}</p>{% endif %}
+    <div class="meta">
+      <time>{{ page.date | date(format="%d.%m.%Y") }}</time>
+      {% if page.taxonomies.tags %}
+      <span class="tags">{% for tag in page.taxonomies.tags %}<span>#{{ tag }}</span>{% endfor %}</span>
+      {% endif %}
+    </div>
+  </a>
   {% endfor %}
 </section>
 {% endblock %}

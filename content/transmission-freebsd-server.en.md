@@ -2,6 +2,9 @@
 title = "transmission on a freebsd server"
 date = 2026-08-05
 description = "Notes on setting up transmission on a freebsd server"
+
+[taxonomies]
+tags = ["freebsd"]
 +++
 
 ## Installation

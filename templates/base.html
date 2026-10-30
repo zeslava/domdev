@@ -67,6 +67,7 @@
         <header>
             <nav>
                 <a href="{{ config.base_url }}">{{ config.title }}</a>
+                <a href="{{ get_url(path='tags/', lang=lang) }}">{% if lang == "en" %}tags{% else %}теги{% endif %}</a>
                 <div class="lang-switcher">
                     {% if lang == "ru" %} {% set target_url = "" %} {% if page
                     and page.translations %} {% for tr in page.translations %}{%

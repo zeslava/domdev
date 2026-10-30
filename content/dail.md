@@ -2,6 +2,9 @@
 title = "dail: запускаю сервисы во freebsd jail как в docker"
 date = 2026-10-29
 description = "Как я запускаю сервисы на FreeBSD в изолированных jail с помощью dail — небольшой утилиты"
+
+[taxonomies]
+tags = ["dail", "jail", "freebsd"]
 +++
 
 Я новичок во FreeBSD. Основной опыт у меня с Linux, но в какой-то момент приглянулась философия FreeBSD:

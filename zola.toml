@@ -6,6 +6,8 @@ default_language = "ru"
 generate_feeds = true
 feed_filenames = ["atom.xml"]
 
+taxonomies = [{ name = "tags", feed = true }]
+
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
 
@@ -16,11 +18,13 @@ build_search_index = false
 title = "domdev"
 description = "Writing about things I find interesting: development, systems administration, hardware."
 generate_feeds = true
+taxonomies = [{ name = "tags", feed = true }]
 
 [markdown]
 
 [markdown.highlighting]
-theme = "catppuccin-latte"
+light_theme = "catppuccin-latte"
+dark_theme = "catppuccin-mocha"
 
 [extra]
 # Put all your custom variables here
