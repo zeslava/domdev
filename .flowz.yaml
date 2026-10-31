@@ -1,0 +1,11 @@
+version: 1
+
+triggers:
+  - on: push
+    branches: [main]
+
+steps:
+  deploy:
+    exec: ci/deploy.sh
+    only:
+      branch: main
