@@ -1,6 +1,6 @@
 <!--
 MEDIUM PUBLISHING NOTES (delete before/while importing — not part of the article):
-- Best path: Medium "Import a story" with URL https://zeslava.github.io/en/blog/db-mcp/
+- Best path: Medium "Import a story" with URL https://domdev.su/en/db-mcp/
   so the canonical link points back to the original automatically.
 - If pasting manually: set the canonical link in story settings to the URL above.
 - Title (set in the editor, not in the body): db-mcp: connect your database to AI

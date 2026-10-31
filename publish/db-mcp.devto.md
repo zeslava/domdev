@@ -3,7 +3,7 @@ title: "db-mcp: connect your database to AI"
 published: false
 description: "A lightweight MCP server written in Rust that lets Claude and other tools query PostgreSQL, MySQL, SQLite, and ClickHouse safely and privately"
 tags: rust, mcp, ai, database
-canonical_url: https://zeslava.github.io/en/blog/db-mcp/
+canonical_url: https://domdev.su/en/db-mcp/
 cover_image: ""
 ---
 
