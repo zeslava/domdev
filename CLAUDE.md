@@ -23,7 +23,7 @@ Static site built with [Zola](https://www.getzola.org/). Default language is **R
 
 **Styles:** `sass/main.scss` compiled automatically by Zola.
 
-**Deployment:** push to `main` → GitHub Actions uploads `public/` to GitHub Pages. The `public/` directory must be committed — CI does not rebuild, it only deploys what's already there.
+**Deployment:** site is served at `domdev.su` by nginx in a FreeBSD container built from `site.dail` (config in `dail/nginx.conf`). The image copies the prebuilt `public/` as-is, so run `zola build` and commit `public/` before deploying.
 
 ## Multilingual conventions
 
