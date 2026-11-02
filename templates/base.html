@@ -103,6 +103,7 @@
                 "@type": "BlogPosting",
                 "headline": {{ page.title | json_encode | safe }},
                 "datePublished": "{{ page.date | date(format="%Y-%m-%d") }}",
+                "author": { "@type": "Person", "name": "Slava" },
                 "url": {{ page.permalink | json_encode | safe }},
                 "inLanguage": "{{ lang }}"
             }
