@@ -65,7 +65,7 @@
             title="{{ config.title }}"
             href="{{ get_url(path='atom.xml', lang=lang) }}"
         />
-        {% endif %} {% if current %} {% for tr in current.translations %}
+        {% endif %} {% if current %} {% for tr in current.translations | sort(attribute="lang") %}
         <link
             rel="alternate"
             hreflang="{{ tr.lang }}"
