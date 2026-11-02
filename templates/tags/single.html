@@ -12,7 +12,7 @@
     <h2>{{ page.title }}</h2>
     {% if page.description %}<p>{{ page.description }}</p>{% endif %}
     <div class="meta">
-      <time>{{ page.date | date(format="%d.%m.%Y") }}</time>
+      <time datetime="{{ page.date | date(format="%Y-%m-%d") }}">{{ page.date | date(format="%d.%m.%Y") }}</time>
       {% if page.taxonomies.tags %}
       <span class="tags">{% for tag in page.taxonomies.tags %}<span>#{{ tag }}</span>{% endfor %}</span>
       {% endif %}
